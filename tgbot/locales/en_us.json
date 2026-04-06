@@ -1,0 +1,38 @@
+{
+    "start": {
+        "greeting": "🔸 Hello, {user_name}\n🔸 Enter /start or /menu"
+    },
+    "menu": {
+        "user_button": "User button",
+        "admin_button": "Admin button",
+        "enter_menu": "Enter command - /menu"
+    },
+    "throttling": {
+        "spam_warning": "<b>❗ Please, do not spam.</b>"
+    },
+    "missed": {
+        "unknown_command": "♦️ Unknown command.\n♦️ Enter /start",
+        "miss_callback": "❗️ Miss callback: {data}"
+    },
+    "admin": {
+        "inline_keyboards": "Inline admin keyboards",
+        "backup_caption": "📦 #BACKUP | <code>{date}</code>",
+        "autobackup_caption": "📦 #AUTOBACKUP | <code>{date}</code>",
+        "logs_caption": "🖨 #LOGS | <code>{date}</code>",
+        "logs_cleared": "<b>🖨 The logs have been cleared</b>",
+        "bot_started": "<b>✅ Bot was started</b>"
+    },
+    "user": {
+        "inline_keyboards": "Inline user keyboards"
+    },
+    "buttons": {
+        "user_x": "User X",
+        "user_1": "User 1",
+        "user_2": "User 2",
+        "user_unknown": "User Unknown",
+        "admin_x": "Admin X",
+        "admin_1": "Admin 1",
+        "admin_2": "Admin 2",
+        "admin_unknown": "Admin Unknown"
+    }
+}

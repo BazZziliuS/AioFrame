@@ -1,0 +1,38 @@
+{
+    "start": {
+        "greeting": "🔸 Привет, {user_name}\n🔸 Введите /start или /menu"
+    },
+    "menu": {
+        "user_button": "Пользователь",
+        "admin_button": "Админ панель",
+        "enter_menu": "Введите команду - /menu"
+    },
+    "throttling": {
+        "spam_warning": "<b>❗ Пожалуйста, не спамьте.</b>"
+    },
+    "missed": {
+        "unknown_command": "♦️ Неизвестная команда.\n♦️ Введите /start",
+        "miss_callback": "❗️ Неизвестная кнопка: {data}"
+    },
+    "admin": {
+        "inline_keyboards": "Inline клавиатуры админа",
+        "backup_caption": "📦 #БЭКАП | <code>{date}</code>",
+        "autobackup_caption": "📦 #АВТОБЭКАП | <code>{date}</code>",
+        "logs_caption": "🖨 #ЛОГИ | <code>{date}</code>",
+        "logs_cleared": "<b>🖨 Логи очищены</b>",
+        "bot_started": "<b>✅ Бот запущен</b>"
+    },
+    "user": {
+        "inline_keyboards": "Inline клавиатуры пользователя"
+    },
+    "buttons": {
+        "user_x": "Пользователь X",
+        "user_1": "Пользователь 1",
+        "user_2": "Пользователь 2",
+        "user_unknown": "Пользователь ???",
+        "admin_x": "Админ X",
+        "admin_1": "Админ 1",
+        "admin_2": "Админ 2",
+        "admin_unknown": "Админ ???"
+    }
+}
