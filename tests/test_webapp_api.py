@@ -153,3 +153,28 @@ async def test_spa_fallback(api, tmp_path, monkeypatch):
     assert "immutable" in asset.headers["cache-control"]
     assert (await api.get("/../pyproject.toml")).status_code == 200  # falls back to index
     assert "id=root" in (await api.get("/../pyproject.toml")).text
+
+
+async def test_webapp_can_be_disabled(tg, monkeypatch):
+    from webapp.app import create_app
+
+    monkeypatch.setattr(settings, "webapp_enabled", False)
+    app = create_app(tg.bot, tg.dp)
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        assert (await client.get("/api/me", headers=auth(ADMIN_ID))).status_code == 404
+        assert (await client.get("/")).status_code == 404
+        assert (await client.get("/health")).text == "ok"
+
+
+async def test_menu_button_follows_webapp_switch(tg, monkeypatch):
+    from aiogram.methods import SetChatMenuButton
+    from aiogram.types import MenuButtonDefault, MenuButtonWebApp
+
+    from main import setup_menu_button
+
+    await setup_menu_button(tg.bot)
+    assert isinstance(tg.session.of_type(SetChatMenuButton)[-1].menu_button, MenuButtonWebApp)
+
+    monkeypatch.setattr(settings, "webapp_enabled", False)
+    await setup_menu_button(tg.bot)
+    assert isinstance(tg.session.of_type(SetChatMenuButton)[-1].menu_button, MenuButtonDefault)

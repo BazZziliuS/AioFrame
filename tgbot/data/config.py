@@ -50,7 +50,8 @@ class Settings(BaseSettings):
     webapp_port: int = 8080
 
     # Telegram Mini App (served by the same web server)
-    webapp_url: str | None = None  # public HTTPS URL of the Mini App, enables it
+    webapp_enabled: bool = False  # Mini App: API, frontend and the chat menu button
+    webapp_url: str | None = None  # public HTTPS URL of the Mini App
     webapp_auth_ttl: int = Field(default=24 * 3600, gt=0)  # max age of initData, seconds
 
     @field_validator("redis_url", "webhook_base_url", "webhook_secret", "webapp_url", mode="before")
@@ -93,6 +94,8 @@ class Settings(BaseSettings):
     def _check_webhook(self) -> Settings:
         if self.bot_mode == "webhook" and not self.webhook_base_url:
             raise ValueError("WEBHOOK_BASE_URL is required when BOT_MODE=webhook")
+        if self.webapp_enabled and not self.webapp_url:
+            raise ValueError("WEBAPP_URL is required when WEBAPP_ENABLED=true")
         if self.webapp_url and not self.webapp_url.startswith("https://"):
             raise ValueError("WEBAPP_URL must be an https:// URL (Telegram requirement)")
         return self
@@ -100,7 +103,7 @@ class Settings(BaseSettings):
     @property
     def web_server_enabled(self) -> bool:
         """The HTTP server is needed for webhook updates and/or the Mini App."""
-        return self.bot_mode == "webhook" or self.webapp_url is not None
+        return self.bot_mode == "webhook" or self.webapp_enabled
 
     @property
     def timezone(self) -> ZoneInfo:

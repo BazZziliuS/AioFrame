@@ -78,8 +78,9 @@ def create_app(bot: Bot, dp: Dispatcher) -> FastAPI:
     if settings.bot_mode == "webhook":
         _add_webhook_route(app, bot, dp)
 
-    app.include_router(me.router)
-    app.include_router(admin.router)
+    if settings.webapp_enabled:
+        app.include_router(me.router)
+        app.include_router(admin.router)
 
     @app.api_route(
         "/api/{path:path}",
@@ -89,5 +90,6 @@ def create_app(bot: Bot, dp: Dispatcher) -> FastAPI:
     async def api_not_found(path: str) -> None:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    _add_frontend_routes(app)  # must be the last: catch-all route
+    if settings.webapp_enabled:
+        _add_frontend_routes(app)  # must be the last: catch-all route
     return app

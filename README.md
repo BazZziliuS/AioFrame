@@ -118,7 +118,8 @@ The server also answers `GET /health` with `ok` for health checks.
 
 ## Telegram Mini App
 
-The web server (FastAPI + uvicorn) starts when `WEBAPP_URL` is set or in webhook mode.
+The Mini App is optional: it is off by default (`WEBAPP_ENABLED=false`). The web server
+(FastAPI + uvicorn) starts when the Mini App is enabled or in webhook mode.
 It serves the Telegram webhook, the API (`/api/...`) and the built frontend.
 
 ```bash
@@ -127,11 +128,15 @@ npm install
 npm run build           # -> webapp/static, served by the bot
 ```
 
-Set the public HTTPS address in `.env` and restart the bot. The chat menu button opens the app:
+Enable it in `.env` and restart the bot. The chat menu button opens the app:
 
 ```bash
+WEBAPP_ENABLED=true
 WEBAPP_URL=https://app.example.com
 ```
+
+With `WEBAPP_ENABLED=false` the API, the frontend and the menu button are turned off;
+the frontend does not need to be built.
 
 The frontend sends `Authorization: tma <initData>` with every request. The backend checks
 the signature with the bot token and the age of the data (`WEBAPP_AUTH_TTL`), then loads
@@ -179,7 +184,8 @@ All settings are in `.env` (real environment variables take priority):
 | `WEBHOOK_PATH` | Webhook path | `/webhook` |
 | `WEBHOOK_SECRET` | Secret token checked by the webhook server | — |
 | `WEBAPP_HOST` / `WEBAPP_PORT` | Web server address | `0.0.0.0` / `8080` |
-| `WEBAPP_URL` | Public HTTPS URL of the Mini App, enables it | — |
+| `WEBAPP_ENABLED` | Turn the Mini App on | `false` |
+| `WEBAPP_URL` | Public HTTPS URL of the Mini App, required when enabled | — |
 | `WEBAPP_AUTH_TTL` | Max age of Telegram `initData`, seconds | `86400` |
 
 ## Admin Commands

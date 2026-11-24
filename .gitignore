@@ -196,3 +196,6 @@ settings.ini
 /tgbot/data/*.log
 .pytest_cache/
 .ruff_cache/
+
+# Python template ignores lib/: keep the frontend sources
+!frontend/src/lib/

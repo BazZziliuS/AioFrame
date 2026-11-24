@@ -15,6 +15,8 @@ os.environ.update(
         "THROTTLE_RATE": "0",  # anti-spam is tested separately
         "BROADCAST_RATE": "1000",
         "BOT_STATUS_NOTIFICATION": "true",
+        "WEBAPP_ENABLED": "true",
+        "WEBAPP_URL": "https://app.test",
     }
 )
 

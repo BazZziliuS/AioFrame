@@ -41,6 +41,17 @@ def test_webhook_mode_requires_url():
     assert s.webhook_url == "https://x.io/hook"
 
 
+def test_webapp_switch_requires_https_url():
+    off = make_settings(webapp_enabled="false", webapp_url="")
+    assert off.web_server_enabled is False
+    with pytest.raises(ValidationError, match="WEBAPP_URL is required"):
+        make_settings(webapp_enabled="true", webapp_url="")
+    with pytest.raises(ValidationError, match="https"):
+        make_settings(webapp_enabled="true", webapp_url="http://insecure.test")
+    s = make_settings(webapp_enabled="true", webapp_url="https://app.test")
+    assert s.web_server_enabled is True
+
+
 def test_empty_optional_values_become_none():
     s = make_settings(redis_url="", webhook_secret=" ")
     assert s.redis_url is None

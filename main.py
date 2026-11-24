@@ -74,8 +74,8 @@ def create_web_server(bot: Bot, dp: Dispatcher) -> uvicorn.Server:
 
 
 async def setup_menu_button(bot: Bot) -> None:
-    """Chat menu button opens the Mini App when WEBAPP_URL is set."""
-    if settings.webapp_url:
+    """Chat menu button opens the Mini App when it is enabled, otherwise shows commands."""
+    if settings.webapp_enabled and settings.webapp_url:
         button = MenuButtonWebApp(
             text=Locale()("menu.webapp_button"), web_app=WebAppInfo(url=settings.webapp_url)
         )
@@ -153,7 +153,7 @@ async def main() -> None:
                 "Web server on %s:%s (Mini App: %s)",
                 settings.webapp_host,
                 settings.webapp_port,
-                settings.webapp_url or "disabled",
+                settings.webapp_url if settings.webapp_enabled else "disabled",
             )
         await run_bot(bot, dp)
     finally:
