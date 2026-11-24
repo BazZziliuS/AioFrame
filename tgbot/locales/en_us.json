@@ -4,23 +4,66 @@
     },
     "menu": {
         "user_button": "User button",
+        "feedback_button": "✉️ Feedback",
         "admin_button": "Admin button",
         "enter_menu": "Enter command - /menu"
     },
+    "common": {
+        "cancelled": "❌ Action cancelled",
+        "nothing_to_cancel": "Nothing to cancel"
+    },
+    "commands": {
+        "start": "♻️ Restart bot",
+        "menu": "🌀 Get keyboards",
+        "feedback": "✉️ Write to admins",
+        "cancel": "❌ Cancel current action",
+        "admin": "🔧 Admin panel",
+        "stats": "📊 Statistics",
+        "broadcast": "📢 Broadcast",
+        "log": "🖨 Get logs",
+        "db": "📦 Get database"
+    },
     "throttling": {
         "spam_warning": "<b>❗ Please, do not spam.</b>"
+    },
+    "access": {
+        "maintenance": "🛠 The bot is under maintenance. Please try again later."
     },
     "missed": {
         "unknown_command": "♦️ Unknown command.\n♦️ Enter /start",
         "miss_callback": "❗️ Miss callback: {data}"
     },
+    "feedback": {
+        "ask": "✉️ Send your message to the admins.\nUse /cancel to abort.",
+        "text_only": "Please send a text message or /cancel",
+        "sent": "✅ Thank you! Your message has been sent.",
+        "admin_message": "✉️ <b>#FEEDBACK</b> from {user} (<code>{user_id}</code>)\n\n{text}"
+    },
     "admin": {
-        "inline_keyboards": "Inline admin keyboards",
+        "panel": "🔧 <b>Admin panel</b>",
+        "stats": "📊 <b>Statistics</b>\n\n👥 Total users: <code>{total}</code>\n🆕 New today: <code>{new_day}</code>\n📅 New this week: <code>{new_week}</code>\n✅ Reachable: <code>{active}</code>\n🚫 Banned: <code>{banned}</code>\n⛔ Blocked the bot: <code>{blocked}</code>",
+        "maintenance_on": "🛠 Maintenance mode is <b>ON</b>: only admins can use the bot",
+        "maintenance_off": "✅ Maintenance mode is <b>OFF</b>",
         "backup_caption": "📦 #BACKUP | <code>{date}</code>",
         "autobackup_caption": "📦 #AUTOBACKUP | <code>{date}</code>",
+        "backup_unsupported": "📦 Database backups are available only for SQLite",
         "logs_caption": "🖨 #LOGS | <code>{date}</code>",
+        "logs_empty": "🖨 There are no log files yet",
         "logs_cleared": "<b>🖨 The logs have been cleared</b>",
-        "bot_started": "<b>✅ Bot was started</b>"
+        "bot_started": "<b>✅ Bot was started</b>",
+        "ban_usage": "Usage: <code>/ban user_id</code> or <code>/unban user_id</code>",
+        "ban_done": "🚫 User <code>{user_id}</code> is banned",
+        "unban_done": "✅ User <code>{user_id}</code> is unbanned",
+        "ban_admin": "❗ Admins cannot be banned",
+        "user_not_found": "❗ User <code>{user_id}</code> not found"
+    },
+    "broadcast": {
+        "ask": "📢 Send the message to broadcast: text, photo, video, anything.\nUse /cancel to abort.",
+        "preview": "👆 This is a preview. Send it to <b>{count}</b> users?",
+        "no_users": "❗ There are no users to send to",
+        "started": "📢 Broadcast to <b>{count}</b> users started. I will report when it is done.",
+        "already_running": "❗ A broadcast is already running, wait for it to finish",
+        "finished": "📢 <b>Broadcast finished</b>\n\n✅ Delivered: <code>{sent}</code>\n⛔ Blocked the bot: <code>{blocked}</code>\n❌ Failed: <code>{failed}</code>"
     },
     "user": {
         "inline_keyboards": "Inline user keyboards"
@@ -30,9 +73,14 @@
         "user_1": "User 1",
         "user_2": "User 2",
         "user_unknown": "User Unknown",
-        "admin_x": "Admin X",
-        "admin_1": "Admin 1",
-        "admin_2": "Admin 2",
-        "admin_unknown": "Admin Unknown"
+        "admin_stats": "📊 Statistics",
+        "admin_broadcast": "📢 Broadcast",
+        "admin_maintenance_on": "🛠 Maintenance: ON",
+        "admin_maintenance_off": "🛠 Maintenance: OFF",
+        "admin_backup": "📦 Backup",
+        "admin_logs": "🖨 Logs",
+        "confirm": "✅ Send",
+        "cancel": "❌ Cancel",
+        "close": "✖️ Close"
     }
 }

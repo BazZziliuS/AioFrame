@@ -1,6 +1,5 @@
 from datetime import datetime
 from textwrap import dedent
-from zoneinfo import ZoneInfo
 
 from aiogram import Bot
 from aiogram.exceptions import TelegramAPIError
@@ -13,7 +12,7 @@ from aiogram.types import (
     WebAppInfo,
 )
 
-from tgbot.data.config import BOT_TIMEZONE, get_admins
+from tgbot.data.config import settings
 from tgbot.utils.misc.bot_logging import bot_logger
 
 
@@ -69,8 +68,13 @@ async def smart_message(
         )
 
 
-async def send_admins(bot: Bot, text: str, markup=None, not_me=0):
-    for admin in get_admins():
+async def send_admins(
+    bot: Bot,
+    text: str,
+    markup: InlineKeyboardMarkup | None = None,
+    not_me: int = 0,
+) -> None:
+    for admin in settings.admin_ids:
         if str(admin) != str(not_me):
             try:
                 await bot.send_message(
@@ -80,9 +84,7 @@ async def send_admins(bot: Bot, text: str, markup=None, not_me=0):
                     disable_web_page_preview=True,
                 )
             except TelegramAPIError as error:
-                bot_logger.warning(
-                    "Failed to send message to admin %s: %s", admin, error
-                )
+                bot_logger.warning("Failed to send message to admin %s: %s", admin, error)
 
 
 ##################################### MISC #####################################
@@ -99,7 +101,7 @@ def clear_html(get_text: str | None) -> str:
 
 
 def get_date(full: bool = True) -> str:
-    now = datetime.now(ZoneInfo(BOT_TIMEZONE))
+    now = datetime.now(settings.timezone)
     if full:
         return now.strftime("%d.%m.%Y %H:%M:%S")
     return now.strftime("%d.%m.%Y")

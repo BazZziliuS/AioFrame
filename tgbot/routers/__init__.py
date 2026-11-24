@@ -1,29 +1,24 @@
 from aiogram import Dispatcher, F
 
 from tgbot.routers import main_errors, main_missed, main_start
-from tgbot.routers.admin import admin_menu
-from tgbot.routers.user import user_menu
-from tgbot.utils.misc.bot_filters import IsAdmin
+from tgbot.routers.admin import admin_broadcast, admin_menu
+from tgbot.routers.user import user_feedback, user_menu
+
+# Order matters: the first matching handler wins
+ROUTERS = (
+    main_errors.router,  # Error handlers
+    main_start.router,  # /start, /cancel
+    user_menu.router,  # User routes
+    user_feedback.router,  # FSM example
+    admin_menu.router,  # Admin routes (IsAdmin filter inside)
+    admin_broadcast.router,  # Admin broadcast (IsAdmin filter inside)
+    main_missed.router,  # Fallback handlers: must be the last one
+)
 
 
 # Register all routers
-def register_all_routers(dp: Dispatcher):
-    # Connect filters
-    main_errors.router.message.filter(F.chat.type == "private")
-    main_start.router.message.filter(F.chat.type == "private")
-
-    user_menu.router.message.filter(F.chat.type == "private")
-    admin_menu.router.message.filter(F.chat.type == "private", IsAdmin())
-
-    main_missed.router.message.filter(F.chat.type == "private")
-
-    # Connect needed routers
-    dp.include_router(main_errors.router)  # Router - error
-    dp.include_router(main_start.router)  # Router - main
-
-    # Connect usebles routers (users и admins)
-    dp.include_router(user_menu.router)  # Router - user
-    dp.include_router(admin_menu.router)  # Router - admin
-
-    # Connect needed routers
-    dp.include_router(main_missed.router)  # Router - missed handlers
+def register_all_routers(dp: Dispatcher) -> None:
+    for router in ROUTERS:
+        # The bot works in private chats only
+        router.message.filter(F.chat.type == "private")
+        dp.include_router(router)

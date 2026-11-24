@@ -4,23 +4,66 @@
     },
     "menu": {
         "user_button": "Пользователь",
+        "feedback_button": "✉️ Обратная связь",
         "admin_button": "Админ панель",
         "enter_menu": "Введите команду - /menu"
     },
+    "common": {
+        "cancelled": "❌ Действие отменено",
+        "nothing_to_cancel": "Нечего отменять"
+    },
+    "commands": {
+        "start": "♻️ Перезапустить бота",
+        "menu": "🌀 Показать клавиатуру",
+        "feedback": "✉️ Написать админам",
+        "cancel": "❌ Отменить действие",
+        "admin": "🔧 Админ панель",
+        "stats": "📊 Статистика",
+        "broadcast": "📢 Рассылка",
+        "log": "🖨 Получить логи",
+        "db": "📦 Получить базу данных"
+    },
     "throttling": {
         "spam_warning": "<b>❗ Пожалуйста, не спамьте.</b>"
+    },
+    "access": {
+        "maintenance": "🛠 Бот на техническом обслуживании. Попробуйте позже."
     },
     "missed": {
         "unknown_command": "♦️ Неизвестная команда.\n♦️ Введите /start",
         "miss_callback": "❗️ Неизвестная кнопка: {data}"
     },
+    "feedback": {
+        "ask": "✉️ Отправьте сообщение для администрации.\nДля отмены — /cancel.",
+        "text_only": "Отправьте текстовое сообщение или /cancel",
+        "sent": "✅ Спасибо! Сообщение отправлено.",
+        "admin_message": "✉️ <b>#ОБРАТНАЯ_СВЯЗЬ</b> от {user} (<code>{user_id}</code>)\n\n{text}"
+    },
     "admin": {
-        "inline_keyboards": "Inline клавиатуры админа",
+        "panel": "🔧 <b>Админ панель</b>",
+        "stats": "📊 <b>Статистика</b>\n\n👥 Всего пользователей: <code>{total}</code>\n🆕 Новых за сутки: <code>{new_day}</code>\n📅 Новых за неделю: <code>{new_week}</code>\n✅ Доступны: <code>{active}</code>\n🚫 Забанены: <code>{banned}</code>\n⛔ Заблокировали бота: <code>{blocked}</code>",
+        "maintenance_on": "🛠 Техобслуживание <b>ВКЛЮЧЕНО</b>: ботом могут пользоваться только админы",
+        "maintenance_off": "✅ Техобслуживание <b>ВЫКЛЮЧЕНО</b>",
         "backup_caption": "📦 #БЭКАП | <code>{date}</code>",
         "autobackup_caption": "📦 #АВТОБЭКАП | <code>{date}</code>",
+        "backup_unsupported": "📦 Бэкап базы доступен только для SQLite",
         "logs_caption": "🖨 #ЛОГИ | <code>{date}</code>",
+        "logs_empty": "🖨 Файлов логов пока нет",
         "logs_cleared": "<b>🖨 Логи очищены</b>",
-        "bot_started": "<b>✅ Бот запущен</b>"
+        "bot_started": "<b>✅ Бот запущен</b>",
+        "ban_usage": "Использование: <code>/ban user_id</code> или <code>/unban user_id</code>",
+        "ban_done": "🚫 Пользователь <code>{user_id}</code> забанен",
+        "unban_done": "✅ Пользователь <code>{user_id}</code> разбанен",
+        "ban_admin": "❗ Админа забанить нельзя",
+        "user_not_found": "❗ Пользователь <code>{user_id}</code> не найден"
+    },
+    "broadcast": {
+        "ask": "📢 Отправьте сообщение для рассылки: текст, фото, видео — что угодно.\nДля отмены — /cancel.",
+        "preview": "👆 Это предпросмотр. Отправить <b>{count}</b> пользователям?",
+        "no_users": "❗ Некому отправлять",
+        "started": "📢 Рассылка на <b>{count}</b> пользователей запущена. Сообщу, когда закончится.",
+        "already_running": "❗ Рассылка уже идёт, дождитесь окончания",
+        "finished": "📢 <b>Рассылка завершена</b>\n\n✅ Доставлено: <code>{sent}</code>\n⛔ Заблокировали бота: <code>{blocked}</code>\n❌ Ошибки: <code>{failed}</code>"
     },
     "user": {
         "inline_keyboards": "Inline клавиатуры пользователя"
@@ -30,9 +73,14 @@
         "user_1": "Пользователь 1",
         "user_2": "Пользователь 2",
         "user_unknown": "Пользователь ???",
-        "admin_x": "Админ X",
-        "admin_1": "Админ 1",
-        "admin_2": "Админ 2",
-        "admin_unknown": "Админ ???"
+        "admin_stats": "📊 Статистика",
+        "admin_broadcast": "📢 Рассылка",
+        "admin_maintenance_on": "🛠 Техобслуживание: ВКЛ",
+        "admin_maintenance_off": "🛠 Техобслуживание: ВЫКЛ",
+        "admin_backup": "📦 Бэкап",
+        "admin_logs": "🖨 Логи",
+        "confirm": "✅ Отправить",
+        "cancel": "❌ Отмена",
+        "close": "✖️ Закрыть"
     }
 }

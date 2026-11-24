@@ -5,12 +5,11 @@ import sys
 from logging.config import fileConfig
 from pathlib import Path
 
+from alembic import context
 from dotenv import load_dotenv
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-
-from alembic import context
 
 load_dotenv()
 
@@ -24,13 +23,14 @@ Base = _models.Base
 
 config = context.config
 
-# Set URL from .env
-config.set_main_option(
-    "sqlalchemy.url",
-    os.getenv("DATABASE_URL", "sqlite+aiosqlite:///tgbot/data/database.db"),
+# URL: passed by the bot on startup (tgbot/database/migrations.py) or taken from .env
+database_url = config.attributes.get("database_url") or os.getenv(
+    "DATABASE_URL", "sqlite+aiosqlite:///tgbot/data/database.db"
 )
+config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
 
-if config.config_file_name is not None:
+# Do not reconfigure logging when migrations run inside the bot process
+if config.config_file_name is not None and config.attributes.get("configure_logger", True):
     fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata

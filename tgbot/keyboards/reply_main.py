@@ -1,20 +1,21 @@
 from aiogram.types import ReplyKeyboardMarkup
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
-from tgbot.data.config import get_admins
+from tgbot.data.config import settings
 from tgbot.services.locale import Locale
 from tgbot.utils.const_functions import rkb
 
 
-# Кнопки главного меню
+# Main menu buttons
 def menu_reply(user_id: int, locale: Locale) -> ReplyKeyboardMarkup:
     keyboard = ReplyKeyboardBuilder()
 
     keyboard.row(
         rkb(locale("menu.user_button")),
+        rkb(locale("menu.feedback_button")),
     )
 
-    if user_id in get_admins():
+    if settings.is_admin(user_id):
         keyboard.row(
             rkb(locale("menu.admin_button")),
         )

@@ -3,9 +3,10 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from tgbot.services.locale import Locale
 from tgbot.utils.const_functions import ikb
+from tgbot.utils.misc.bot_callbacks import AdminAction, AdminCallback, BroadcastCallback
 
 
-# Inline keyboards for users
+# Inline keyboards for users (example)
 def user_inline(locale: Locale) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardBuilder()
 
@@ -20,16 +21,39 @@ def user_inline(locale: Locale) -> InlineKeyboardMarkup:
     return keyboard.as_markup()
 
 
-# Inline keyboards for admins
-def admin_inline(locale: Locale) -> InlineKeyboardMarkup:
+# Admin panel
+def admin_panel_inline(locale: Locale, is_maintenance: bool) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardBuilder()
+
+    def button(key: str, action: AdminAction):
+        return ikb(locale(key), data=AdminCallback(action=action).pack())
+
+    maintenance_key = (
+        "buttons.admin_maintenance_on" if is_maintenance else "buttons.admin_maintenance_off"
+    )
+
+    keyboard.row(
+        button("buttons.admin_stats", AdminAction.STATS),
+        button("buttons.admin_broadcast", AdminAction.BROADCAST),
+    ).row(
+        button(maintenance_key, AdminAction.MAINTENANCE),
+    ).row(
+        button("buttons.admin_backup", AdminAction.BACKUP),
+        button("buttons.admin_logs", AdminAction.LOGS),
+    ).row(
+        ikb(locale("buttons.close"), data="close_this"),
+    )
+
+    return keyboard.as_markup()
+
+
+# Broadcast confirmation
+def broadcast_confirm_inline(locale: Locale) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardBuilder()
 
     keyboard.row(
-        ikb(locale("buttons.admin_x"), data="admin_inline_x"),
-        ikb(locale("buttons.admin_1"), data="admin_inline:admin_btn"),
-        ikb(locale("buttons.admin_2"), data="..."),
-    ).row(
-        ikb(locale("buttons.admin_unknown"), data="unknown"),
+        ikb(locale("buttons.confirm"), data=BroadcastCallback(confirm=True).pack()),
+        ikb(locale("buttons.cancel"), data=BroadcastCallback(confirm=False).pack()),
     )
 
     return keyboard.as_markup()

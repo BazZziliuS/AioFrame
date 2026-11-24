@@ -1,6 +1,8 @@
 [project]
 name = "aioframe"
-version = "0.1.0"
+version = "0.2.0"
+description = "Production-ready Telegram bot template on aiogram 3"
+readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "aiofiles>=25.1.0",
@@ -12,18 +14,40 @@ dependencies = [
     "cachetools>=8.0.2",
     "colorama>=0.4.6",
     "colorlog>=6.12.0",
+    "pydantic-settings>=2.16.3",
     "python-dotenv>=1.2.4",
     "sqlalchemy[asyncio]>=2.1.9",
     "tzdata>=2025.2; sys_platform == 'win32'",
 ]
 
+[project.optional-dependencies]
+postgres = ["asyncpg>=0.32.0"]
+redis = ["redis>=8.2.0"]
+
 [dependency-groups]
 dev = [
+    "pytest>=9.2.0",
+    "pytest-asyncio>=1.5.0",
     "ruff>=0.17.6",
 ]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-ra"
+filterwarnings = ["error", "ignore::ResourceWarning"]
+
 [tool.ruff]
 target-version = "py314"
+line-length = 100
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF", "ASYNC"]
+ignore = ["RUF001", "RUF003"]  # Cyrillic in comments and strings is intended
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
+known-third-party = ["alembic"]

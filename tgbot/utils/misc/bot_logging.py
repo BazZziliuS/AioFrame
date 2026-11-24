@@ -2,29 +2,31 @@ import logging as bot_logger
 
 import colorlog
 
-from tgbot.data.config import PATH_LOGS
+from tgbot.data.config import settings
+
+LOG_FORMAT = "%(levelname)s | %(asctime)s | %(name)s | %(filename)s:%(lineno)d | %(message)s"
 
 # Logging format
-log_formatter_file = bot_logger.Formatter(
-    "%(levelname)s | %(asctime)s | %(filename)s:%(lineno)d | %(message)s"
-)
+log_formatter_file = bot_logger.Formatter(LOG_FORMAT)
 log_formatter_console = colorlog.ColoredFormatter(
-    "%(purple)s%(levelname)s %(blue)s|%(purple)s %(asctime)s %(blue)s|%(purple)s %(filename)s:%(lineno)d %(blue)s|%(purple)s %(message)s%(red)s",
+    "%(purple)s%(levelname)s %(blue)s|%(purple)s %(asctime)s %(blue)s|%(purple)s "
+    "%(filename)s:%(lineno)d %(blue)s|%(purple)s %(message)s%(reset)s",
     datefmt="%d-%m-%Y %H:%M:%S",
 )
 
-# Logging in file logs.log
-file_handler = bot_logger.FileHandler(PATH_LOGS, "w", "utf-8")
+# Logging in file (directory is created if missing)
+settings.path_logs.parent.mkdir(parents=True, exist_ok=True)
+file_handler = bot_logger.FileHandler(settings.path_logs, "a", "utf-8")
 file_handler.setFormatter(log_formatter_file)
-file_handler.setLevel(bot_logger.INFO)
+file_handler.setLevel(settings.log_level)
 
-# Logging in console
+# Logging in console: only warnings and errors, the rest goes to the file
 console_handler = bot_logger.StreamHandler()
 console_handler.setFormatter(log_formatter_console)
-console_handler.setLevel(bot_logger.CRITICAL)
+console_handler.setLevel(bot_logger.WARNING)
 
-# Connect logging settings
-bot_logger.basicConfig(
-    format="%(levelname)s | %(asctime)s | %(filename)s:%(lineno)d | %(message)s",
-    handlers=[file_handler, console_handler],
-)
+# Connect handlers explicitly: basicConfig() is a no-op if the root logger is already configured
+_root = bot_logger.getLogger()
+_root.setLevel(settings.log_level)
+_root.addHandler(file_handler)
+_root.addHandler(console_handler)

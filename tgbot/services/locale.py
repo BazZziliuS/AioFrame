@@ -1,13 +1,15 @@
 import json
+from functools import cache
 from pathlib import Path
+from typing import Any
 
 LOCALES_DIR = Path(__file__).resolve().parent.parent / "locales"
 DEFAULT_LOCALE = "en_us"
 
-_cache: dict[str, dict] = {}
+_cache: dict[str, dict[str, Any]] = {}
 
 
-def _load_locale(locale: str) -> dict:
+def _load_locale(locale: str) -> dict[str, Any]:
     if locale in _cache:
         return _cache[locale]
 
@@ -15,58 +17,72 @@ def _load_locale(locale: str) -> dict:
     if not path.exists():
         path = LOCALES_DIR / f"{DEFAULT_LOCALE}.json"
 
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         data = json.load(f)
 
     _cache[locale] = data
     return data
 
 
-def get_available_locales() -> list[str]:
-    return [p.stem for p in LOCALES_DIR.glob("*.json")]
+@cache
+def get_available_locales() -> tuple[str, ...]:
+    return tuple(sorted(p.stem for p in LOCALES_DIR.glob("*.json")))
+
+
+def _lookup(data: dict[str, Any], key: str) -> str | None:
+    value: Any = data
+    for part in key.split("."):
+        if not isinstance(value, dict) or part not in value:
+            return None
+        value = value[part]
+    return value if isinstance(value, str) else None
 
 
 class Locale:
     def __init__(self, lang: str = DEFAULT_LOCALE):
         self._lang = lang
         self._data = _load_locale(lang)
-        self._fallback = (
-            _load_locale(DEFAULT_LOCALE) if lang != DEFAULT_LOCALE else self._data
-        )
+        self._fallback = _load_locale(DEFAULT_LOCALE) if lang != DEFAULT_LOCALE else self._data
 
     @property
     def lang(self) -> str:
         return self._lang
 
-    def get(self, key: str, **kwargs) -> str:
-        parts = key.split(".")
-        value = self._data
-        for part in parts:
-            if isinstance(value, dict) and part in value:
-                value = value[part]
-            else:
-                value = None
-                break
+    @property
+    def language_code(self) -> str:
+        """Two-letter code used by Telegram (`ru_ru` -> `ru`)."""
+        return self._lang.split("_", 1)[0]
 
-        # Fallback to default locale
+    def get(self, key: str, **kwargs: Any) -> str:
+        value = _lookup(self._data, key)
         if value is None:
-            value = self._fallback
-            for part in parts:
-                if isinstance(value, dict) and part in value:
-                    value = value[part]
-                else:
-                    return key
+            value = _lookup(self._fallback, key)  # Fallback to default locale
+        if value is None:
+            return key
+        return value.format(**kwargs) if kwargs else value
 
-        if isinstance(value, str) and kwargs:
-            return value.format(**kwargs)
-
-        return value if isinstance(value, str) else key
-
-    def __call__(self, key: str, **kwargs) -> str:
+    def __call__(self, key: str, **kwargs: Any) -> str:
         return self.get(key, **kwargs)
 
 
+@cache
+def get_translations(key: str) -> frozenset[str]:
+    """All translations of a key: used to match reply-keyboard buttons in any language."""
+    return frozenset(Locale(lang)(key) for lang in get_available_locales())
+
+
 def language_code_to_locale(language_code: str | None) -> str:
-    if language_code == "ru":
-        return "ru_ru"
+    """Map Telegram language code (`ru`, `pt-br`) to an available locale file."""
+    if not language_code:
+        return DEFAULT_LOCALE
+
+    code = language_code.lower().replace("-", "_")
+    locales = get_available_locales()
+    if code in locales:
+        return code
+
+    prefix = code.split("_", 1)[0]
+    for locale in locales:
+        if locale.split("_", 1)[0] == prefix:
+            return locale
     return DEFAULT_LOCALE

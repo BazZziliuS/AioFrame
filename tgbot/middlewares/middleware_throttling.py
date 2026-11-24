@@ -20,18 +20,19 @@ THROTTLE_PENALTIES = [
 class ThrottlingMiddleware(BaseMiddleware):
     def __init__(self, default_rate: float = 0.5) -> None:
         self.default_rate = default_rate
-        self.users = TTLCache(maxsize=10_000, ttl=600)
+        self.users: TTLCache[int, tuple[float, int, float]] = TTLCache(maxsize=10_000, ttl=600)
 
     async def __call__(
         self,
         handler: Callable[[Message, dict[str, Any]], Awaitable[Any]],
         event: Message,
-        data,
-    ):
-        this_user: User = data.get("event_from_user")
+        data: dict[str, Any],
+    ) -> Any:
+        this_user: User | None = data.get("event_from_user")
 
+        # Per-handler override: @router.message(..., flags={"rate": 2})
         rate = get_flag(data, "rate") or self.default_rate
-        if rate == 0:
+        if rate == 0 or this_user is None:
             return await handler(event, data)
 
         now = time.monotonic()
