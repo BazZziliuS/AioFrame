@@ -201,4 +201,4 @@ settings.ini
 .ruff_cache/
 
 # Python template ignores lib/: keep the frontend sources
-!frontend/src/lib/
+!frontend/src/**/lib/
