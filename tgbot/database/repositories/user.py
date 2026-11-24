@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 
 from tgbot.database.models import User
 from tgbot.database.repositories.base import BaseRepository
@@ -79,3 +79,29 @@ class UserRepository(BaseRepository[User]):
             banned=await self.count(is_banned=True),
             blocked=await self.count(User.is_banned.is_(False), is_blocked=True),
         )
+
+    async def search(
+        self, query: str = "", *, offset: int = 0, limit: int = 20
+    ) -> tuple[Sequence[User], int]:
+        """Users matching id / login / name, newest first, plus the total count."""
+        conditions = []
+        query = query.strip().lstrip("@")
+        if query:
+            pattern = f"%{query.lower()}%"
+            conditions.append(
+                or_(
+                    func.lower(User.user_login).like(pattern),
+                    func.lower(User.user_fullname).like(pattern),
+                    *([User.user_id == int(query)] if query.isdigit() else []),
+                )
+            )
+
+        stmt = (
+            select(User)
+            .where(*conditions)
+            .order_by(User.created_at.desc(), User.id.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        items = (await self._session.scalars(stmt)).all()
+        return items, await self.count(*conditions)

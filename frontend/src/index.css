@@ -1,0 +1,32 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+
+/*
+ * The app uses the stock HeroUI theme. Light/dark mode follows the Telegram client
+ * (see useTelegramTheme), and the Telegram header/background are painted in the
+ * HeroUI background color, so the app looks native in both themes.
+ */
+
+html,
+body {
+  background: var(--background);
+  color: var(--foreground);
+  overscroll-behavior: none;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Respect notches and Telegram's own controls in fullscreen mode */
+.app-shell {
+  padding-top: calc(
+    var(--tg-viewport-safe-area-inset-top, 0px) +
+      var(--tg-viewport-content-safe-area-inset-top, 0px) + 20px
+  );
+  padding-bottom: calc(var(--tg-viewport-safe-area-inset-bottom, 0px) + 32px);
+  padding-left: calc(var(--tg-viewport-safe-area-inset-left, 0px) + 16px);
+  padding-right: calc(var(--tg-viewport-safe-area-inset-right, 0px) + 16px);
+}

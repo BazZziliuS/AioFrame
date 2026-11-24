@@ -1,6 +1,6 @@
 import asyncio
 
-from aiohttp.test_utils import TestClient, TestServer
+from httpx import ASGITransport, AsyncClient
 from pydantic import SecretStr
 
 from tgbot.data.config import settings
@@ -18,21 +18,22 @@ UPDATE = {
 }
 
 
-async def test_webhook_app_checks_secret_and_handles_updates(tg, monkeypatch):
-    from main import create_webhook_app
+async def test_webhook_checks_secret_and_handles_updates(tg, monkeypatch):
+    from webapp.app import create_app
 
+    monkeypatch.setattr(settings, "bot_mode", "webhook")
     monkeypatch.setattr(settings, "webhook_secret", SecretStr("s3cret"))
-    app = create_webhook_app(tg.bot, tg.dp)
+    app = create_app(tg.bot, tg.dp)
 
-    async with TestClient(TestServer(app)) as client:
-        assert await (await client.get("/health")).text() == "ok"
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        assert (await client.get("/health")).text == "ok"
 
         response = await client.post(settings.webhook_path, json=UPDATE)
-        assert response.status == 401  # no secret header
+        assert response.status_code == 401  # no secret header
 
         headers = {"X-Telegram-Bot-Api-Secret-Token": "s3cret"}
         response = await client.post(settings.webhook_path, json=UPDATE, headers=headers)
-        assert response.status == 200
+        assert response.status_code == 200
 
         # Updates are processed in background: wait for the answer
         for _ in range(100):
@@ -40,3 +41,12 @@ async def test_webhook_app_checks_secret_and_handles_updates(tg, monkeypatch):
                 break
             await asyncio.sleep(0.02)
         assert tg.session.texts()[-1].startswith("🔸 Hello, Web")
+
+
+async def test_webhook_route_absent_in_polling_mode(tg):
+    from webapp.app import create_app
+
+    app = create_app(tg.bot, tg.dp)
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.post(settings.webhook_path, json=UPDATE)
+        assert response.status_code in (404, 405)

@@ -1,3 +1,12 @@
+# Stage 1: build the Mini App (React + Vite) into webapp/static
+FROM node:24-alpine AS frontend
+WORKDIR /build/frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
+
+# Stage 2: Python runtime with the bot, API and the built frontend
 FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim
 
 WORKDIR /app
@@ -15,6 +24,7 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --all-extras --no-install-project
 
 COPY . .
+COPY --from=frontend /build/webapp/static ./webapp/static
 
 RUN useradd --create-home --uid 1000 bot \
     && mkdir -p /app/data \

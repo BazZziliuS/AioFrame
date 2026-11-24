@@ -9,5 +9,8 @@
 .pytest_cache
 .ruff_cache
 tests
+frontend/node_modules
+frontend/.env.local
+webapp/static
 tgbot/data/*.db
 tgbot/data/*.log

@@ -6,7 +6,8 @@
         "user_button": "User button",
         "feedback_button": "✉️ Feedback",
         "admin_button": "Admin button",
-        "enter_menu": "Enter command - /menu"
+        "enter_menu": "Enter command - /menu",
+        "webapp_button": "Open app"
     },
     "common": {
         "cancelled": "❌ Action cancelled",

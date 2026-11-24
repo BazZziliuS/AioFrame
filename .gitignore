@@ -188,6 +188,9 @@ fabric.properties
 /tgbot/data/logs.log
 settings.ini
 
+# Built Mini App (npm run build)
+/webapp/static/
+
 # Runtime data
 /tgbot/data/*.db
 /tgbot/data/*.log

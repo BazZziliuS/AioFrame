@@ -6,7 +6,8 @@
         "user_button": "Пользователь",
         "feedback_button": "✉️ Обратная связь",
         "admin_button": "Админ панель",
-        "enter_menu": "Введите команду - /menu"
+        "enter_menu": "Введите команду - /menu",
+        "webapp_button": "Открыть"
     },
     "common": {
         "cancelled": "❌ Действие отменено",
