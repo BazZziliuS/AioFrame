@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { UserAvatar } from "../components/UserAvatar";
 import type { Me } from "../lib/api";
 import { useI18n } from "../lib/i18n";
+import { Feedback } from "./Feedback";
 
 const LANGUAGE_NAMES: Record<string, string> = { ru: "Русский", en: "English" };
 
@@ -64,6 +65,8 @@ export function Profile({ me, onOpenAdmin }: { me: Me; onOpenAdmin: () => void }
           </Card.Footer>
         )}
       </Card>
+
+      <Feedback />
     </div>
   );
 }

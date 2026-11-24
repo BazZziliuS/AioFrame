@@ -21,6 +21,7 @@ dependencies = [
     { name = "aiohttp" },
     { name = "aiosqlite" },
     { name = "alembic" },
+    { name = "altcha" },
     { name = "apscheduler" },
     { name = "cachetools" },
     { name = "colorama" },
@@ -56,6 +57,7 @@ requires-dist = [
     { name = "aiohttp", specifier = ">=3.14.5" },
     { name = "aiosqlite", specifier = ">=0.22.1" },
     { name = "alembic", specifier = ">=1.20.1" },
+    { name = "altcha", specifier = ">=2.5.0" },
     { name = "apscheduler", specifier = ">=3.11.3,<4" },
     { name = "asyncpg", marker = "extra == 'postgres'", specifier = ">=0.32.0" },
     { name = "cachetools", specifier = ">=8.0.2" },
@@ -238,6 +240,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/93/1c/00909e0fbebad2121d916fdcab044cae988146680e9ee4387ba25fef8747/alembic-1.20.1.tar.gz", hash = "sha256:83490def1f723413db5096591f7609ac52544805be93849170088ed04f5a2e0b", size = 2103576, upload-time = "2026-10-22T03:24:35.93Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/11/3c/8740f5b4e1bd57333e4f84265b9b6363da4f7cf70f5622dd1e2fde7a0bd5/alembic-1.20.1-py3-none-any.whl", hash = "sha256:9970712cfb81ea26c8658d378aaa5b8f6ff9146e5bb111d70497c164016cf598", size = 270355, upload-time = "2026-10-22T03:24:37.667Z" },
+]
+
+[[package]]
+name = "altcha"
+version = "2.5.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a5/55/5b521ef529ff81cebee89c65e39b245595ef8666a6f22ab277502aaa33a3/altcha-2.5.0.tar.gz", hash = "sha256:36aa53274436858b52399955e2008517b27dc1cd5e989affe08e8674c3023463", size = 43565, upload-time = "2026-11-21T05:43:05.62Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/56/f9/c512126aa330e3410fc2baf34542a4e7ff0b0954bbafddef5ea9b924ea45/altcha-2.5.0-py3-none-any.whl", hash = "sha256:3358f8d7ff43ba8e038c759dc70c5a90659dd45c6892c8921301c33454622b58", size = 27084, upload-time = "2026-11-21T05:43:04.462Z" },
 ]
 
 [[package]]

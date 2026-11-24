@@ -17,6 +17,8 @@ os.environ.update(
         "BOT_STATUS_NOTIFICATION": "true",
         "WEBAPP_ENABLED": "true",
         "WEBAPP_URL": "https://app.test",
+        "CAPTCHA_ENABLED": "true",
+        "CAPTCHA_COST": "1000",  # fast solving in tests
     }
 )
 

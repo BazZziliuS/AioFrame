@@ -54,7 +54,20 @@ class Settings(BaseSettings):
     webapp_url: str | None = None  # public HTTPS URL of the Mini App
     webapp_auth_ttl: int = Field(default=24 * 3600, gt=0)  # max age of initData, seconds
 
-    @field_validator("redis_url", "webhook_base_url", "webhook_secret", "webapp_url", mode="before")
+    # Captcha for sensitive Mini App actions (proof-of-work, no third-party service)
+    captcha_enabled: bool = True
+    captcha_secret: SecretStr | None = None  # HMAC key; derived from BOT_TOKEN when empty
+    captcha_cost: int = Field(default=5000, ge=1000)  # work per attempt: higher = slower to solve
+    captcha_ttl: int = Field(default=300, gt=0)  # seconds to solve and submit
+
+    @field_validator(
+        "redis_url",
+        "webhook_base_url",
+        "webhook_secret",
+        "webapp_url",
+        "captcha_secret",
+        mode="before",
+    )
     @classmethod
     def _empty_to_none(cls, value: Any) -> Any:
         return None if isinstance(value, str) and not value.strip() else value

@@ -42,6 +42,16 @@ const en = {
   "settings.title": "Bot mode",
   "settings.description": "Applies to the bot and this app at once",
   "settings.activeAlert": "Maintenance is on: users see a maintenance message.",
+  "feedback.title": "Message to the admins",
+  "feedback.description": "The admins will receive it in the bot",
+  "feedback.placeholder": "Your question or suggestion",
+  "feedback.send": "Send",
+  "feedback.sent": "Message sent",
+
+  "captcha.solving": "Checking that you are not a robot…",
+  "captcha.ready": "Verification passed",
+  "captcha.error": "Verification failed",
+
   "settings.maintenance": "Maintenance mode",
   "settings.maintenanceText":
     "Only admins can use the bot and this app. Users see a maintenance message.",
@@ -61,6 +71,10 @@ const en = {
   "error.admin_only": "This section is available to admins only.",
   "error.cannot_ban_admin": "Admins cannot be banned.",
   "error.user_not_found": "User not found.",
+  "error.captcha_required": "Please wait for the verification to finish.",
+  "error.captcha_invalid": "Verification failed. Try again.",
+  "error.captcha_expired": "Verification expired. Try again.",
+  "error.captcha_used": "Verification expired. Try again.",
 
   "outside.title": "Open in Telegram",
   "outside.text": "This app works inside Telegram. Open it from the bot menu.",
@@ -110,6 +124,16 @@ const ru: Record<Key, string> = {
   "settings.title": "Режим работы",
   "settings.description": "Действует сразу на бота и приложение",
   "settings.activeAlert": "Техобслуживание включено: пользователи видят сообщение о работах.",
+  "feedback.title": "Написать администрации",
+  "feedback.description": "Сообщение придёт админам в боте",
+  "feedback.placeholder": "Ваш вопрос или предложение",
+  "feedback.send": "Отправить",
+  "feedback.sent": "Сообщение отправлено",
+
+  "captcha.solving": "Проверяем, что вы не робот…",
+  "captcha.ready": "Проверка пройдена",
+  "captcha.error": "Не удалось пройти проверку",
+
   "settings.maintenance": "Техобслуживание",
   "settings.maintenanceText":
     "Ботом и приложением могут пользоваться только админы. Остальные видят сообщение о работах.",
@@ -129,6 +153,10 @@ const ru: Record<Key, string> = {
   "error.admin_only": "Раздел доступен только админам.",
   "error.cannot_ban_admin": "Админа забанить нельзя.",
   "error.user_not_found": "Пользователь не найден.",
+  "error.captcha_required": "Дождитесь окончания проверки.",
+  "error.captcha_invalid": "Проверка не пройдена. Попробуйте ещё раз.",
+  "error.captcha_expired": "Проверка устарела. Попробуйте ещё раз.",
+  "error.captcha_used": "Проверка устарела. Попробуйте ещё раз.",
 
   "outside.title": "Откройте в Telegram",
   "outside.text": "Приложение работает внутри Telegram. Откройте его из меню бота.",

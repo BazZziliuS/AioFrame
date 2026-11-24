@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse, PlainTextResponse
 
 from tgbot.data.config import settings
 from tgbot.utils.misc.bot_logging import bot_logger
-from webapp.routers import admin, me
+from webapp.routers import admin, captcha, feedback, me
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"  # `npm run build` output
 
@@ -80,6 +80,8 @@ def create_app(bot: Bot, dp: Dispatcher) -> FastAPI:
 
     if settings.webapp_enabled:
         app.include_router(me.router)
+        app.include_router(captcha.router)
+        app.include_router(feedback.router)
         app.include_router(admin.router)
 
     @app.api_route(

@@ -31,6 +31,8 @@ Production-ready template for building Telegram bots on **aiogram 3** with async
 - **Authorization** by Telegram `initData` (HMAC signature + expiry) on every request
 - **Admin panel** in the app: audience stats, user search with ban/unban, maintenance switch
 - Ban and maintenance mode apply to the bot and the app at once
+- **Captcha** for sensitive actions: proof-of-work, solved in the background, no third-party
+  service; one dependency protects any endpoint (example: feedback form)
 
 **Tooling**
 - **Tests** — pytest suite with a fake Telegram API (handlers, middlewares, migrations, webhook)
@@ -50,6 +52,7 @@ Production-ready template for building Telegram bots on **aiogram 3** with async
 ├── webapp/                        # FastAPI: webhook, Mini App API, built frontend
 │   ├── app.py                     # App factory, static files, webhook route
 │   ├── auth.py                    # initData validation, user / admin dependencies
+│   ├── captcha.py                 # Proof-of-work captcha: challenge, require_captcha
 │   └── routers/                   # /api/me, /api/admin/*
 └── tgbot/
     ├── data/config.py             # Settings (pydantic-settings)
@@ -162,6 +165,35 @@ cd frontend && npm run dev                  # open http://localhost:5173
 
 `VITE_DEV_THEME=light` in `frontend/.env.local` switches the emulated theme.
 
+### Captcha
+
+Sensitive actions (forms, bonuses, anything that bots would spam) are protected by a
+proof-of-work captcha. The app requests a challenge signed by the server and solves it in
+the background (≈0.5–1 s on a phone) while the user fills in the form. There are no
+pictures to click and no third-party service: nothing leaves your server.
+
+Each challenge is bound to the Telegram user, expires after `CAPTCHA_TTL` seconds and is
+accepted only once. Protect an endpoint with one dependency:
+
+```python
+from webapp.captcha import Captcha
+
+
+@router.post("/api/bonus", dependencies=[Captcha])
+async def claim_bonus(user: CurrentUser): ...
+```
+
+On the frontend use the hook and the status component (see `screens/Feedback.tsx`):
+
+```tsx
+const captcha = useCaptcha();
+await api.something(data, captcha.payload);   // sent as the X-Captcha header
+captcha.refresh();                            // a solution is single-use
+```
+
+`CAPTCHA_COST` controls how much work a solution takes; raise it if the protected action is
+attacked. Used solutions are kept in process memory: with several bot instances move them to Redis.
+
 ## Configuration
 
 All settings are in `.env` (real environment variables take priority):
@@ -187,6 +219,10 @@ All settings are in `.env` (real environment variables take priority):
 | `WEBAPP_ENABLED` | Turn the Mini App on | `false` |
 | `WEBAPP_URL` | Public HTTPS URL of the Mini App, required when enabled | — |
 | `WEBAPP_AUTH_TTL` | Max age of Telegram `initData`, seconds | `86400` |
+| `CAPTCHA_ENABLED` | Require captcha on protected actions | `true` |
+| `CAPTCHA_SECRET` | HMAC key for challenges, derived from `BOT_TOKEN` if empty | — |
+| `CAPTCHA_COST` | Work per attempt (higher = slower to solve) | `5000` |
+| `CAPTCHA_TTL` | Seconds to solve and submit a challenge | `300` |
 
 ## Admin Commands
 

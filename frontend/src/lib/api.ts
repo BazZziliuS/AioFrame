@@ -1,3 +1,5 @@
+import type { Challenge } from "altcha-lib";
+
 import { getRawInitData } from "./telegram";
 
 export type User = {
@@ -48,7 +50,17 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+export type CaptchaChallenge = {
+  enabled: boolean;
+  challenge: Challenge | null;
+};
+
+async function request<T>(
+  method: string,
+  path: string,
+  body?: unknown,
+  headers?: Record<string, string>,
+): Promise<T> {
   let response: Response;
   try {
     response = await fetch(path, {
@@ -56,6 +68,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
       headers: {
         Authorization: `tma ${getRawInitData()}`,
         ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+        ...headers,
       },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
@@ -79,6 +92,14 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
 export const api = {
   me: () => request<Me>("GET", "/api/me"),
+  captcha: () => request<CaptchaChallenge>("GET", "/api/captcha"),
+  sendFeedback: (text: string, captcha: string | null) =>
+    request<{ ok: boolean }>(
+      "POST",
+      "/api/feedback",
+      { text },
+      captcha ? { "X-Captcha": captcha } : undefined,
+    ),
   stats: () => request<Stats>("GET", "/api/admin/stats"),
   users: (q: string, offset: number, limit = 20) =>
     request<UsersPage>(
