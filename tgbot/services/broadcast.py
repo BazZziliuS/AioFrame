@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from collections.abc import Iterable
 from dataclasses import dataclass
 
@@ -7,7 +8,8 @@ from aiogram.exceptions import TelegramAPIError, TelegramForbiddenError, Telegra
 
 from tgbot.database.engine import async_session
 from tgbot.database.repositories import UserRepository
-from tgbot.utils.misc.bot_logging import bot_logger
+
+logger = logging.getLogger(__name__)
 
 # Running broadcast tasks: keeps references so tasks are not garbage collected
 running_tasks: set[asyncio.Task[BroadcastResult]] = set()
@@ -57,7 +59,7 @@ async def broadcast(
             blocked_ids.append(user_id)
         except TelegramAPIError as error:
             result.failed += 1
-            bot_logger.warning("Broadcast to %s failed: %s", user_id, error)
+            logger.warning("Broadcast to %s failed: %s", user_id, error)
         await asyncio.sleep(delay)
 
     if blocked_ids:
@@ -67,5 +69,5 @@ async def broadcast(
                 await repo.set_blocked(user_id, True)
             await session.commit()
 
-    bot_logger.info("Broadcast finished: %s", result)
+    logger.info("Broadcast finished: %s", result)
     return result

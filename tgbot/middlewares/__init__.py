@@ -1,15 +1,15 @@
 from aiogram import Dispatcher
 
-from tgbot.data.config import settings
-from tgbot.middlewares.middleware_access import AccessMiddleware
-from tgbot.middlewares.middleware_throttling import ThrottlingMiddleware
-from tgbot.middlewares.middleware_user import ExistsUserMiddleware
+from tgbot.config import settings
+from tgbot.middlewares.access import AccessMiddleware
+from tgbot.middlewares.throttling import ThrottlingMiddleware
+from tgbot.middlewares.user import UserMiddleware
 
 
-# Register all middlewares (order matters: user sync -> access check -> throttling)
-def register_all_middlewares(dp: Dispatcher) -> None:
+def register_middlewares(dp: Dispatcher) -> None:
+    """Order matters: user sync -> access check (ban, maintenance) -> anti-spam."""
     for observer in (dp.message, dp.callback_query):
-        observer.outer_middleware(ExistsUserMiddleware())
+        observer.outer_middleware(UserMiddleware())
         observer.outer_middleware(AccessMiddleware())
 
     dp.message.middleware(ThrottlingMiddleware(default_rate=settings.throttle_rate))

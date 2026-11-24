@@ -1,11 +1,15 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from typing import Any, cast
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import CursorResult, Insert, insert, or_, select
+from sqlalchemy.dialects import postgresql, sqlite
 
 from tgbot.database.models import User
 from tgbot.database.repositories.base import BaseRepository
+
+PROFILE_FIELDS = ("user_login", "user_name", "user_surname", "user_fullname", "user_locale")
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,25 +32,61 @@ class UserRepository(BaseRepository[User]):
     async def get_by_user_id(self, user_id: int) -> User | None:
         return await self.get_one(user_id=user_id)
 
-    async def create_user(
-        self,
-        user_id: int,
-        user_login: str = "",
-        user_name: str = "",
-        user_surname: str = "",
-        user_fullname: str = "",
-        user_locale: str = "en_us",
-    ) -> User:
-        return await self.create(
-            user_id=user_id,
-            user_login=user_login,
-            user_name=user_name,
-            user_surname=user_surname,
-            user_fullname=user_fullname,
-            user_locale=user_locale,
-        )
+    def _insert_ignoring_duplicates(self, values: dict[str, Any]) -> Insert:
+        """INSERT that does nothing if the user already exists (concurrent first updates)."""
+        dialect = self._session.get_bind().dialect.name
+        if dialect == "postgresql":
+            return (
+                postgresql.insert(User)
+                .values(values)
+                .on_conflict_do_nothing(index_elements=[User.user_id])
+            )
+        if dialect == "sqlite":
+            return (
+                sqlite.insert(User)
+                .values(values)
+                .on_conflict_do_nothing(index_elements=[User.user_id])
+            )
+        return insert(User).values(values)
 
-    async def update_user(self, user_id: int, **values: object) -> bool:
+    async def get_or_create(self, user_id: int, **profile: str) -> tuple[User, bool]:
+        """Return the user, creating it if needed. Safe when called concurrently.
+
+        Returns (user, created).
+        """
+        user = await self.get_by_user_id(user_id)
+        if user is not None:
+            return user, False
+
+        values = {"user_id": user_id, **profile}
+        values["search_text"] = User.build_search_text(
+            profile.get("user_fullname", ""), profile.get("user_login", "")
+        )
+        statement = self._insert_ignoring_duplicates(values)
+        result = cast(CursorResult[Any], await self._session.execute(statement))
+        user = await self.get_by_user_id(user_id)
+        if user is None:  # pragma: no cover - the row exists after the INSERT
+            raise RuntimeError(f"User {user_id} was not created")
+        return user, bool(result.rowcount)
+
+    async def create_user(self, user_id: int, **profile: str) -> User:
+        user, _ = await self.get_or_create(user_id, **profile)
+        return user
+
+    async def update_profile(self, user: User, **changes: Any) -> None:
+        """Apply changes to the user (and the search index when names change)."""
+        if not changes:
+            return
+        if {"user_fullname", "user_login"} & changes.keys():
+            changes["search_text"] = User.build_search_text(
+                changes.get("user_fullname", user.user_fullname),
+                changes.get("user_login", user.user_login),
+            )
+        await self.update_by(filters={"user_id": user.user_id}, **changes)
+        for key, value in changes.items():
+            setattr(user, key, value)
+
+    async def update_user(self, user_id: int, **values: Any) -> bool:
         return await self.update_by(filters={"user_id": user_id}, **values) > 0
 
     async def get_all_users(self) -> Sequence[User]:
@@ -64,18 +104,12 @@ class UserRepository(BaseRepository[User]):
     async def set_blocked(self, user_id: int, blocked: bool) -> bool:
         return await self.update_user(user_id, is_blocked=blocked)
 
-    def _since(self, delta: timedelta) -> datetime:
-        since = datetime.now(UTC) - delta
-        # SQLite stores CURRENT_TIMESTAMP as naive UTC text
-        if self._session.bind.dialect.name == "sqlite":
-            since = since.replace(tzinfo=None)
-        return since
-
     async def get_stats(self) -> UserStats:
+        now = datetime.now(UTC)
         return UserStats(
             total=await self.count(),
-            new_day=await self.count(User.created_at >= self._since(timedelta(days=1))),
-            new_week=await self.count(User.created_at >= self._since(timedelta(days=7))),
+            new_day=await self.count(User.created_at >= now - timedelta(days=1)),
+            new_week=await self.count(User.created_at >= now - timedelta(days=7)),
             banned=await self.count(is_banned=True),
             blocked=await self.count(User.is_banned.is_(False), is_blocked=True),
         )
@@ -83,18 +117,14 @@ class UserRepository(BaseRepository[User]):
     async def search(
         self, query: str = "", *, offset: int = 0, limit: int = 20
     ) -> tuple[Sequence[User], int]:
-        """Users matching id / login / name, newest first, plus the total count."""
+        """Users matching name / @login / Telegram ID, newest first, plus the total count."""
         conditions = []
-        query = query.strip().lstrip("@")
+        query = query.strip().lstrip("@").lower()
         if query:
-            pattern = f"%{query.lower()}%"
-            conditions.append(
-                or_(
-                    func.lower(User.user_login).like(pattern),
-                    func.lower(User.user_fullname).like(pattern),
-                    *([User.user_id == int(query)] if query.isdigit() else []),
-                )
-            )
+            matches = [User.search_text.contains(query, autoescape=True)]
+            if query.isdigit():
+                matches.append(User.user_id == int(query))
+            conditions.append(or_(*matches))
 
         stmt = (
             select(User)

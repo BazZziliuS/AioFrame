@@ -1,10 +1,13 @@
-"""Fake Telegram: feeds updates to the dispatcher and records outgoing API calls."""
+"""Test helpers: fake Telegram API, shared constants, Mini App auth headers."""
 
 import itertools
+import os
 from collections.abc import Callable
 from datetime import datetime
 from typing import Any
+from unittest.mock import patch
 
+import pytest
 from aiogram import Bot, Dispatcher
 from aiogram.client.session.base import BaseSession
 from aiogram.fsm.storage.base import StorageKey
@@ -87,7 +90,14 @@ class TgClient:
     def user(user_id: int, lang: str = "en", first_name: str = "Ivan") -> User:
         return User(id=user_id, is_bot=False, first_name=first_name, language_code=lang)
 
-    async def send(self, user_id: int, text: str | None = None, lang: str = "en", **extra: Any):
+    async def send(
+        self,
+        user_id: int,
+        text: str | None = None,
+        lang: str = "en",
+        first_name: str = "Ivan",
+        **extra: Any,
+    ):
         self._users.add(user_id)
         entities = None
         if text and text.startswith("/"):
@@ -96,7 +106,7 @@ class TgClient:
             message_id=next(_ids),
             date=datetime.now(),
             chat=Chat(id=user_id, type="private"),
-            from_user=self.user(user_id, lang),
+            from_user=self.user(user_id, lang, first_name),
             text=text,
             entities=entities,
             **extra,
@@ -131,3 +141,31 @@ class TgClient:
             key = StorageKey(bot_id=self.bot.id, chat_id=user_id, user_id=user_id)
             await self.dp.storage.set_state(key, None)
             await self.dp.storage.set_data(key, {})
+
+
+#################################### SETUP ####################################
+ADMIN_ID = 1
+DATABASE_URL = os.environ["DATABASE_URL"]  # set by conftest before any import
+IS_SQLITE = DATABASE_URL.startswith("sqlite")
+sqlite_only = pytest.mark.skipif(not IS_SQLITE, reason="SQLite-specific behaviour")
+
+
+#################################### WEB APP ##################################
+def sign_init_data(
+    user: dict[str, Any], *, auth_date: int | None = None, token: str | None = None
+) -> str:
+    """Build initData exactly like Telegram does (HMAC-SHA256 with the bot token)."""
+    from tgbot.config import settings
+    from webapp.tools.dev_init_data import sign_init_data as sign
+
+    token = token or settings.bot_token.get_secret_value()
+    if auth_date is None:
+        return sign(user, token)
+    with patch("time.time", return_value=auth_date):  # custom auth_date
+        return sign(user, token)
+
+
+def auth(user_id: int, **kwargs: Any) -> dict[str, str]:
+    """Authorization header of a Mini App request from this user."""
+    user = {"id": user_id, "first_name": "Web", "last_name": "User", "language_code": "ru"}
+    return {"Authorization": f"tma {sign_init_data(user, **kwargs)}"}

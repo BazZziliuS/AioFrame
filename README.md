@@ -43,38 +43,45 @@ Production-ready template for building Telegram bots on **aiogram 3** with async
 
 ```
 .
-├── main.py                        # Entry point: polling / webhook, startup & shutdown
-├── .env                           # Configuration (from .env.example)
-├── Dockerfile, docker-compose.yml
-├── alembic/                       # Database migrations
-├── tests/                         # pytest suite (fake Telegram API in helpers.py)
-├── frontend/                      # Mini App: React + Vite + HeroUI
-├── webapp/                        # FastAPI: webhook, Mini App API, built frontend
-│   ├── app.py                     # App factory, static files, webhook route
-│   ├── auth.py                    # initData validation, user / admin dependencies
-│   ├── captcha.py                 # Proof-of-work captcha: challenge, require_captcha
-│   └── routers/                   # /api/me, /api/admin/*
-└── tgbot/
-    ├── data/config.py             # Settings (pydantic-settings)
-    ├── database/
-    │   ├── models.py              # SQLAlchemy models
-    │   ├── engine.py              # Async engine & session
-    │   ├── migrations.py          # alembic upgrade on startup
-    │   └── repositories/          # UserRepository, SettingsRepository
-    ├── locales/                   # en_us.json, ru_ru.json
-    ├── middlewares/
-    │   ├── middleware_user.py     # User sync & locale injection
-    │   ├── middleware_access.py   # Ban & maintenance mode
-    │   └── middleware_throttling.py # Anti-spam
-    ├── routers/
-    │   ├── main_start.py          # /start, /cancel
-    │   ├── main_errors.py         # Error handlers
-    │   ├── main_missed.py         # Fallback handlers
-    │   ├── admin/                 # Admin panel, broadcast (IsAdmin inside)
-    │   └── user/                  # User menu, feedback (FSM example)
-    ├── keyboards/                 # Inline & reply keyboards
-    ├── services/                  # locale, broadcast, backup, HTTP session
-    └── utils/                     # helpers, filters, callbacks, commands, logging
+├── main.py                      # Entry point: database, bot, polling / webhook, web server
+├── migrations/                  # Alembic migrations (applied automatically on startup)
+├── data/                        # Runtime files: SQLite database, logs (git-ignored)
+├── tgbot/                       # Telegram bot
+│   ├── config.py                # Settings from .env (pydantic-settings, validated on start)
+│   ├── logger.py                # Logging setup
+│   ├── bot.py                   # Bot, Dispatcher, FSM storage, scheduler, commands, menu button
+│   ├── callbacks.py             # CallbackData factories
+│   ├── filters.py               # IsAdmin, LocaleText
+│   ├── database/
+│   │   ├── models.py            # SQLAlchemy models (UTC datetimes on every database)
+│   │   ├── engine.py            # Async engine, SQLite tuning (WAL, busy timeout)
+│   │   ├── migrations.py        # `alembic upgrade head` on startup
+│   │   └── repositories/        # UserRepository, SettingsRepository
+│   ├── middlewares/             # user sync, access (ban, maintenance), throttling
+│   ├── routers/                 # start, errors, fallback, admin/, user/
+│   ├── keyboards/               # inline, reply
+│   ├── services/                # users, broadcast, backup, notifications, locale, http
+│   ├── utils/                   # telegram helpers, text (HTML escaping, dates)
+│   └── locales/                 # en_us.json, ru_ru.json
+├── webapp/                      # Mini App backend (FastAPI, runs in the bot process)
+│   ├── app.py                   # Application factory
+│   ├── server.py                # uvicorn server
+│   ├── api/
+│   │   ├── deps.py              # Depends: session, bot, current user, admin, captcha
+│   │   └── routes/              # /api/me, /api/captcha, /api/feedback, /api/admin/*
+│   ├── core/                    # Framework-free logic: initData validation, captcha
+│   ├── schemas/                 # Request / response models
+│   ├── webhook.py               # Telegram webhook endpoint
+│   ├── frontend.py              # Serves the built frontend (SPA fallback)
+│   └── tools/                   # dev_init_data: sign initData for local development
+├── frontend/                    # Mini App frontend (React + Vite + HeroUI)
+│   └── src/
+│       ├── app/                 # App shell, providers, query client, error screens
+│       ├── api/                 # HTTP client, endpoints, types, query keys
+│       ├── features/            # profile, feedback, captcha, admin (overview, users, settings)
+│       ├── shared/              # ui, hooks, i18n (en, ru), telegram SDK helpers
+│       └── styles/
+└── tests/                       # pytest: bot/, database/, webapp/ (fake Telegram API)
 ```
 
 ## Quick Start
@@ -159,7 +166,7 @@ In a regular browser, without Telegram: generate signed initData for your accoun
 the app emulates the Telegram client (dev mode only):
 
 ```bash
-uv run python -m webapp.dev_init_data <your_telegram_id> > frontend/.env.local
+uv run python -m webapp.tools.dev_init_data <your_telegram_id> > frontend/.env.local
 cd frontend && npm run dev                  # open http://localhost:5173
 ```
 
@@ -176,10 +183,10 @@ Each challenge is bound to the Telegram user, expires after `CAPTCHA_TTL` second
 accepted only once. Protect an endpoint with one dependency:
 
 ```python
-from webapp.captcha import Captcha
+from webapp.api.deps import CaptchaRequired
 
 
-@router.post("/api/bonus", dependencies=[Captcha])
+@router.post("/api/bonus", dependencies=[CaptchaRequired])
 async def claim_bonus(user: CurrentUser): ...
 ```
 
@@ -202,9 +209,9 @@ All settings are in `.env` (real environment variables take priority):
 |---|---|---|
 | `BOT_TOKEN` | Telegram bot token from @BotFather | **required** |
 | `ADMIN_IDS` | Comma-separated admin Telegram IDs | — |
-| `DATABASE_URL` | SQLAlchemy async URL | `sqlite+aiosqlite:///tgbot/data/database.db` |
+| `DATABASE_URL` | SQLAlchemy async URL (relative paths: from the project root) | `sqlite+aiosqlite:///data/database.db` |
 | `REDIS_URL` | Redis for FSM storage, empty = memory | — |
-| `PATH_LOGS` | Log file path | `tgbot/data/logs.log` |
+| `PATH_LOGS` | Log file path | `data/logs.log` |
 | `LOG_LEVEL` | `DEBUG` / `INFO` / `WARNING` / `ERROR` | `INFO` |
 | `BOT_TIMEZONE` | Timezone for scheduler & dates | `Europe/Moscow` |
 | `BOT_STATUS_NOTIFICATION` | Notify admins on bot start | `true` |
@@ -235,6 +242,20 @@ All settings are in `.env` (real environment variables take priority):
 | `/db` | Database backup (SQLite) |
 | `/log`, `/clear_log` | Get or clear log files |
 
+## Database
+
+- **SQLite** by default (`data/database.db`), **PostgreSQL** with `uv sync --extra postgres`
+  and `DATABASE_URL=postgresql+asyncpg://...`. CI runs the whole test suite on both.
+- Relative SQLite paths are resolved against the project root, so the bot uses the same
+  database whatever the current directory is.
+- SQLite runs in WAL mode with a busy timeout: the bot, the webhook and the Mini App write
+  concurrently without "database is locked" errors.
+- Dates are stored and returned in UTC with the time zone on every database.
+- Names are stored as Telegram sends them; escape them only when building HTML messages
+  (`tgbot.utils.text.escape`).
+- Upgrading from an older version keeps `tgbot/data/database.db` working; move it to
+  `data/database.db` when convenient.
+
 ## Database Migrations
 
 Migrations run on every startup. To change the schema:
@@ -251,12 +272,15 @@ uv run alembic upgrade head
 
 ```bash
 uv sync --all-extras
-uv run pytest           # tests
+uv run pytest           # tests (set TEST_DATABASE_URL to run them on PostgreSQL)
+uv run mypy             # type checking
 uv run ruff check .     # lint
 uv run ruff format .    # format
 
 cd frontend
+npm test                # unit tests (Vitest)
 npm run lint            # ESLint
+npm run format          # Prettier
 npm run build           # type check + production build
 ```
 

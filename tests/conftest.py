@@ -2,13 +2,17 @@ import os
 import tempfile
 from pathlib import Path
 
-# Configure the bot BEFORE any `tgbot` import: settings are read at import time
+# Configure the bot BEFORE any `tgbot` import: settings are read at import time.
+# Tests run on SQLite; set TEST_DATABASE_URL to run them on another database (PostgreSQL).
 _TMP = Path(tempfile.mkdtemp(prefix="aioframe-tests-"))
+DATABASE_URL = os.environ.get("TEST_DATABASE_URL") or (
+    f"sqlite+aiosqlite:///{(_TMP / 'bot.db').as_posix()}"
+)
 os.environ.update(
     {
         "BOT_TOKEN": "123456:TEST-TOKEN",
         "ADMIN_IDS": "1",
-        "DATABASE_URL": f"sqlite+aiosqlite:///{(_TMP / 'bot.db').as_posix()}",
+        "DATABASE_URL": DATABASE_URL,
         "PATH_LOGS": str(_TMP / "logs.log"),
         "REDIS_URL": "",
         "BOT_MODE": "polling",
@@ -23,11 +27,13 @@ os.environ.update(
 )
 
 import pytest  # noqa: E402
+from httpx import ASGITransport, AsyncClient  # noqa: E402
 
 from tests.helpers import FakeSession, TgClient  # noqa: E402
 from tgbot.database import Base, engine  # noqa: E402
+from tgbot.logger import setup_logging  # noqa: E402
 
-ADMIN_ID = 1
+setup_logging()
 
 
 @pytest.fixture
@@ -48,10 +54,10 @@ async def db():
 @pytest.fixture(scope="session")
 def dispatcher():
     """Routers are module-level singletons, so the dispatcher is built once."""
-    from main import create_dispatcher
-    from tgbot.services.api_session import AsyncRequestSession
+    from tgbot.bot import create_dispatcher
+    from tgbot.services.http import HttpClient
 
-    return create_dispatcher(AsyncRequestSession())
+    return create_dispatcher(HttpClient())
 
 
 @pytest.fixture
@@ -68,3 +74,13 @@ async def tg(dispatcher, session):
     client = TgClient(dispatcher, bot, session)
     yield client
     await client.reset_states()
+
+
+@pytest.fixture
+async def api(tg):
+    """HTTP client for the FastAPI app (Mini App API, webhook, frontend)."""
+    from webapp.app import create_app
+
+    app = create_app(tg.bot, tg.dp)
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        yield client

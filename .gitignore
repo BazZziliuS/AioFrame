@@ -191,7 +191,10 @@ settings.ini
 # Built Mini App (npm run build)
 /webapp/static/
 
-# Runtime data
+# Runtime data (database, logs)
+/data/
+*.db-wal
+*.db-shm
 /tgbot/data/*.db
 /tgbot/data/*.log
 .pytest_cache/

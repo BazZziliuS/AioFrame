@@ -5,8 +5,8 @@ from pathlib import Path
 
 from aiogram.types import BufferedInputFile
 
-from tgbot.data.config import settings
-from tgbot.utils.const_functions import get_date
+from tgbot.config import settings
+from tgbot.utils.text import format_now
 
 
 def _sqlite_snapshot(source: Path) -> bytes:
@@ -33,5 +33,5 @@ async def database_backup() -> BufferedInputFile | None:
         return None
 
     data = await asyncio.to_thread(_sqlite_snapshot, path)
-    stamp = get_date().replace(".", "-").replace(":", "-").replace(" ", "_")
+    stamp = format_now().replace(".", "-").replace(":", "-").replace(" ", "_")
     return BufferedInputFile(data, filename=f"{path.stem}_{stamp}{path.suffix or '.db'}")

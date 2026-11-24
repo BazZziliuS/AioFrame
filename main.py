@@ -1,56 +1,35 @@
+"""Entry point: prepares the database, starts the bot (polling or webhook) and the web server."""
+
 import asyncio
+import logging
 from contextlib import suppress
 
 import colorama
-import uvicorn
 from aiogram import Bot, Dispatcher
-from aiogram.client.default import DefaultBotProperties
-from aiogram.enums import ParseMode
-from aiogram.fsm.storage.base import BaseStorage
-from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import MenuButtonDefault, MenuButtonWebApp, WebAppInfo
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from tgbot.data.config import settings
+from tgbot.bot import (
+    create_bot,
+    create_dispatcher,
+    create_scheduler,
+    set_commands,
+    setup_menu_button,
+)
+from tgbot.config import settings
 from tgbot.database import SettingsRepository, async_session, engine
 from tgbot.database.migrations import run_migrations
-from tgbot.middlewares import register_all_middlewares
-from tgbot.routers import register_all_routers
-from tgbot.services.api_session import AsyncRequestSession
-from tgbot.services.locale import Locale
-from tgbot.utils.misc.bot_commands import set_commands
-from tgbot.utils.misc.bot_logging import bot_logger
-from tgbot.utils.misc_functions import autobackup_admin, startup_notify
+from tgbot.logger import setup_logging
+from tgbot.services.http import HttpClient
+from tgbot.services.notifications import notify_admins_started
 
-colorama.init()
-
-
-def create_storage() -> BaseStorage:
-    """FSM storage: Redis keeps dialogs between restarts, memory is for development."""
-    if settings.redis_url:
-        from aiogram.fsm.storage.redis import RedisStorage
-
-        return RedisStorage.from_url(settings.redis_url)
-    return MemoryStorage()
-
-
-def create_dispatcher(ar_session: AsyncRequestSession) -> Dispatcher:
-    dp = Dispatcher(storage=create_storage())
-    dp["arSession"] = ar_session  # Available in handlers as `arSession`
-
-    register_all_middlewares(dp)  # Register all middlewares
-    register_all_routers(dp)  # Register all routers
-    return dp
-
-
-def create_scheduler(bot: Bot) -> AsyncIOScheduler:
-    scheduler = AsyncIOScheduler(timezone=settings.timezone)
-    # Daily database backup to admins
-    scheduler.add_job(autobackup_admin, trigger="cron", hour=settings.autobackup_hour, args=(bot,))
-    return scheduler
+logger = logging.getLogger(__name__)
 
 
 async def prepare_database() -> None:
+    if settings.uses_legacy_data_dir:
+        logger.warning(
+            "Using the database in tgbot/data/ (older layout). "
+            "Move it to data/database.db or set DATABASE_URL explicitly."
+        )
     await run_migrations()  # alembic upgrade head
 
     async with async_session() as session:
@@ -58,43 +37,19 @@ async def prepare_database() -> None:
         await session.commit()
 
 
-def create_web_server(bot: Bot, dp: Dispatcher) -> uvicorn.Server:
-    """FastAPI app (webhook + Mini App) served by uvicorn inside the bot's event loop."""
-    from webapp.app import create_app
-
-    config = uvicorn.Config(
-        create_app(bot, dp),
-        host=settings.webapp_host,
-        port=settings.webapp_port,
-        log_config=None,  # use the bot's logging setup
-        access_log=False,
-        lifespan="off",  # bot lifecycle is managed by main()
-    )
-    return uvicorn.Server(config)
-
-
-async def setup_menu_button(bot: Bot) -> None:
-    """Chat menu button opens the Mini App when it is enabled, otherwise shows commands."""
-    if settings.webapp_enabled and settings.webapp_url:
-        button = MenuButtonWebApp(
-            text=Locale()("menu.webapp_button"), web_app=WebAppInfo(url=settings.webapp_url)
-        )
-        await bot.set_chat_menu_button(menu_button=button)
-    else:
-        await bot.set_chat_menu_button(menu_button=MenuButtonDefault())
-
-
 async def run_bot(bot: Bot, dp: Dispatcher) -> None:
+    """Receive updates by polling or webhook; run the web server when it is needed."""
+    from webapp.server import create_web_server
+
     allowed_updates = dp.resolve_used_update_types()
     server = create_web_server(bot, dp) if settings.web_server_enabled else None
 
     if settings.bot_mode == "webhook":
-        assert server is not None
+        assert server is not None  # webhook mode always enables the web server
+        secret = settings.webhook_secret.get_secret_value() if settings.webhook_secret else None
         await bot.set_webhook(
             settings.webhook_url,
-            secret_token=settings.webhook_secret.get_secret_value()
-            if settings.webhook_secret
-            else None,
+            secret_token=secret,
             allowed_updates=allowed_updates,
             drop_pending_updates=True,
         )
@@ -119,6 +74,7 @@ async def run_bot(bot: Bot, dp: Dispatcher) -> None:
 
 
 def print_banner(username: str | None) -> None:
+    colorama.init()
     print(colorama.Fore.LIGHTYELLOW_EX + f"~~~~~ Bot was started - @{username} ~~~~~")
     print(colorama.Fore.LIGHTBLUE_EX + "~~~~~ TG developer - @BazZziliuS ~~~~~")
     print(colorama.Fore.RESET)
@@ -127,51 +83,48 @@ def print_banner(username: str | None) -> None:
         print("***** ENTER ADMIN_IDS IN .env *****")
 
 
-# Start bot and basic functions
 async def main() -> None:
     await prepare_database()
 
-    ar_session = AsyncRequestSession()  # Async session pool (aiohttp)
-    bot = Bot(
-        token=settings.bot_token.get_secret_value(),
-        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
-    )
-    dp = create_dispatcher(ar_session)
+    http_client = HttpClient()
+    bot = create_bot()
+    dp = create_dispatcher(http_client)
     scheduler = create_scheduler(bot)
 
     try:
-        await set_commands(bot)  # Set commands for users and admins
-        await setup_menu_button(bot)  # Mini App button (or the default one)
-        await startup_notify(bot)  # Notification that bot was started
+        await set_commands(bot)
+        await setup_menu_button(bot)
+        await notify_admins_started(bot)
         scheduler.start()
 
-        bot_logger.warning("BOT WAS STARTED (%s mode)", settings.bot_mode)
-        print_banner((await bot.get_me()).username)
-
+        logger.warning("Bot started (%s mode)", settings.bot_mode)
         if settings.web_server_enabled:
-            bot_logger.warning(
+            logger.warning(
                 "Web server on %s:%s (Mini App: %s)",
                 settings.webapp_host,
                 settings.webapp_port,
                 settings.webapp_url if settings.webapp_enabled else "disabled",
             )
+        print_banner((await bot.get_me()).username)
+
         await run_bot(bot, dp)
     finally:
         if scheduler.running:
             scheduler.shutdown(wait=False)
-        await ar_session.close()  # Close async session (aiohttp)
+        await http_client.close()
         await dp.storage.close()
-        await bot.session.close()  # Close bot session
+        await bot.session.close()
         await engine.dispose()
 
 
 if __name__ == "__main__":
+    setup_logging()
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
         pass
     except Exception:
-        bot_logger.exception("Bot crashed")
+        logger.exception("Bot crashed")
         raise
     finally:
-        bot_logger.warning("Bot was stopped")
+        logger.warning("Bot stopped")
