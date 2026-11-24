@@ -1,6 +1,5 @@
 import json
 from pathlib import Path
-from typing import Optional
 
 LOCALES_DIR = Path(__file__).resolve().parent.parent / "locales"
 DEFAULT_LOCALE = "en_us"
@@ -67,7 +66,7 @@ class Locale:
         return self.get(key, **kwargs)
 
 
-def language_code_to_locale(language_code: Optional[str]) -> str:
+def language_code_to_locale(language_code: str | None) -> str:
     if language_code == "ru":
         return "ru_ru"
     return DEFAULT_LOCALE

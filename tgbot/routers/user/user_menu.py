@@ -1,12 +1,12 @@
-from aiogram import Router, Bot, F
+from aiogram import Bot, F, Router
 from aiogram.filters import Command
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import CallbackQuery, Message
 
 from tgbot.database.models import User as UserModel
 from tgbot.keyboards.inline_main import user_inline
 from tgbot.keyboards.reply_main import menu_reply
 from tgbot.services.locale import Locale
-from tgbot.utils.misc.bot_models import FSM, ARS
+from tgbot.utils.misc.bot_models import ARS, FSM
 
 router = Router(name=__name__)
 

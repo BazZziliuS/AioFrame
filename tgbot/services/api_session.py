@@ -1,7 +1,4 @@
-from typing import Optional
-
 import aiohttp
-
 
 # In handler
 # session = await arSession.get_session()
@@ -12,7 +9,7 @@ import aiohttp
 # Асинхронная сессия для запросов
 class AsyncRequestSession:
     def __init__(self) -> None:
-        self._session: Optional[aiohttp.ClientSession] = None
+        self._session: aiohttp.ClientSession | None = None
 
     # Получение сессии
     async def get_session(self) -> aiohttp.ClientSession:
@@ -25,6 +22,6 @@ class AsyncRequestSession:
     # Закрытие сессии
     async def close(self) -> None:
         if self._session is None:
-            return None
+            return
 
         await self._session.close()

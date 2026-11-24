@@ -1,9 +1,9 @@
 import os
 
 import aiofiles
-from aiogram import Router, Bot, F
+from aiogram import Bot, F, Router
 from aiogram.filters import Command
-from aiogram.types import FSInputFile, Message, CallbackQuery
+from aiogram.types import CallbackQuery, FSInputFile, Message
 from aiogram.utils.media_group import MediaGroupBuilder
 
 from tgbot.data.config import PATH_DATABASE, PATH_LOGS
@@ -11,7 +11,7 @@ from tgbot.database.models import User as UserModel
 from tgbot.keyboards.inline_main import admin_inline
 from tgbot.services.locale import Locale
 from tgbot.utils.const_functions import get_date
-from tgbot.utils.misc.bot_models import FSM, ARS
+from tgbot.utils.misc.bot_models import ARS, FSM
 
 router = Router(name=__name__)
 

@@ -1,5 +1,4 @@
-from typing import Optional, Sequence
-
+from collections.abc import Sequence
 
 from tgbot.database.models import User
 from tgbot.database.repositories.base import BaseRepository
@@ -8,7 +7,7 @@ from tgbot.database.repositories.base import BaseRepository
 class UserRepository(BaseRepository[User]):
     model = User
 
-    async def get_by_user_id(self, user_id: int) -> Optional[User]:
+    async def get_by_user_id(self, user_id: int) -> User | None:
         return await self.get_one(user_id=user_id)
 
     async def create_user(

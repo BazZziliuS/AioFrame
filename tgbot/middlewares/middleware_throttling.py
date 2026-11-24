@@ -1,5 +1,6 @@
 import time
-from typing import Any, Awaitable, Callable, Dict, Union
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 from aiogram import BaseMiddleware
 from aiogram.dispatcher.flags import get_flag
@@ -17,13 +18,13 @@ THROTTLE_PENALTIES = [
 
 
 class ThrottlingMiddleware(BaseMiddleware):
-    def __init__(self, default_rate: Union[int, float] = 0.5) -> None:
+    def __init__(self, default_rate: float = 0.5) -> None:
         self.default_rate = default_rate
         self.users = TTLCache(maxsize=10_000, ttl=600)
 
     async def __call__(
         self,
-        handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
+        handler: Callable[[Message, dict[str, Any]], Awaitable[Any]],
         event: Message,
         data,
     ):
@@ -51,7 +52,7 @@ class ThrottlingMiddleware(BaseMiddleware):
         if allow:
             return await handler(event, data)
 
-        if count == 1:
+        if count == 2:  # first blocked message
             locale: Locale = data.get("locale") or Locale(
                 language_code_to_locale(this_user.language_code)
             )

@@ -1,7 +1,9 @@
 from aiogram import Bot
+from aiogram.exceptions import TelegramAPIError
 from aiogram.types import BotCommand, BotCommandScopeChat, BotCommandScopeDefault
 
 from tgbot.data.config import get_admins
+from tgbot.utils.misc.bot_logging import bot_logger
 
 # Commands for users
 user_commands = [
@@ -27,5 +29,5 @@ async def set_commands(bot: Bot):
             await bot.set_my_commands(
                 admin_commands, scope=BotCommandScopeChat(chat_id=admin)
             )
-        except Exception:
-            pass
+        except TelegramAPIError as error:
+            bot_logger.warning("Failed to set commands for admin %s: %s", admin, error)

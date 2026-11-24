@@ -1,9 +1,11 @@
 from aiogram import Bot
+from aiogram.exceptions import TelegramAPIError
 from aiogram.types import FSInputFile
 
-from tgbot.data.config import get_admins, PATH_DATABASE, BOT_STATUS_NOTIFICATION
+from tgbot.data.config import BOT_STATUS_NOTIFICATION, PATH_DATABASE, get_admins
 from tgbot.services.locale import Locale
 from tgbot.utils.const_functions import get_date, send_admins
+from tgbot.utils.misc.bot_logging import bot_logger
 
 
 # Notification after run bot (for all admins)
@@ -23,5 +25,5 @@ async def autobackup_admin(bot: Bot):
                 FSInputFile(PATH_DATABASE),
                 caption=f"<b>{locale('admin.autobackup_caption', date=get_date())}</b>",
             )
-        except Exception:
-            pass
+        except (TelegramAPIError, OSError) as error:
+            bot_logger.warning("Failed to send backup to admin %s: %s", admin, error)

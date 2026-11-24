@@ -8,8 +8,8 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
-from tgbot.data.config import BOT_TOKEN, BOT_SCHEDULER, get_admins
-from tgbot.database import engine, async_session, Base, SettingsRepository
+from tgbot.data.config import BOT_SCHEDULER, BOT_TOKEN, get_admins
+from tgbot.database import Base, SettingsRepository, async_session, engine
 from tgbot.middlewares import register_all_middlewares
 from tgbot.routers import register_all_routers
 from tgbot.services.api_session import AsyncRequestSession
@@ -82,7 +82,7 @@ async def main():
 if __name__ == "__main__":
     try:
         asyncio.run(main())
-    except (KeyboardInterrupt, SystemExit):
+    except KeyboardInterrupt, SystemExit:
         bot_logger.warning("Bot was stopped")
     finally:
         if sys.platform.startswith("win"):

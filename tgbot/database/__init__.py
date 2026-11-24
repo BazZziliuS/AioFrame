@@ -1,6 +1,6 @@
-from .models import Base as Base, User as User, Settings as Settings
-from .engine import engine as engine, async_session as async_session
+from .engine import async_session as async_session, engine as engine
+from .models import Base as Base, Settings as Settings, User as User
 from .repositories import (
-    UserRepository as UserRepository,
     SettingsRepository as SettingsRepository,
+    UserRepository as UserRepository,
 )

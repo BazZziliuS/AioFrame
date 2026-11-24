@@ -1,10 +1,10 @@
-from aiogram import Router, Bot, F
+from aiogram import Bot, F, Router
 from aiogram.types import CallbackQuery, Message
 
 from tgbot.database.models import User as UserModel
 from tgbot.services.locale import Locale
 from tgbot.utils.const_functions import del_message
-from tgbot.utils.misc.bot_models import FSM, ARS
+from tgbot.utils.misc.bot_models import ARS, FSM
 
 router = Router(name=__name__)
 

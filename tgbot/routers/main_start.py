@@ -1,11 +1,11 @@
-from aiogram import Router, Bot, F
+from aiogram import Bot, F, Router
 from aiogram.filters import Command
 from aiogram.types import Message
 
 from tgbot.database.models import User as UserModel
 from tgbot.keyboards.reply_main import menu_reply
 from tgbot.services.locale import Locale
-from tgbot.utils.misc.bot_models import FSM, ARS
+from tgbot.utils.misc.bot_models import ARS, FSM
 
 router = Router(name=__name__)
 

@@ -1,4 +1,4 @@
-### [![Python](https://img.shields.io/badge/Python-3.13+-blue)](https://www.python.org/) [![Aiogram](https://img.shields.io/badge/aiogram-3.x-blue)](https://pypi.org/project/aiogram/) [![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-green)](https://www.sqlalchemy.org/) [![Alembic](https://img.shields.io/badge/Alembic-migrations-green)](https://alembic.sqlalchemy.org/)
+### [![Python](https://img.shields.io/badge/Python-3.14+-blue)](https://www.python.org/) [![Aiogram](https://img.shields.io/badge/aiogram-3.x-blue)](https://pypi.org/project/aiogram/) [![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.1-green)](https://www.sqlalchemy.org/) [![Alembic](https://img.shields.io/badge/Alembic-migrations-green)](https://alembic.sqlalchemy.org/)
 
 # AioFrame — Telegram Bot Template
 
@@ -64,8 +64,8 @@ Production-ready template for building Telegram bots on **aiogram 3** with async
 
 ```bash
 # Clone
-git clone https://github.com/your-username/aioframe.git
-cd aioframe
+git clone https://github.com/BazZziliuS/AioFrame.git
+cd AioFrame
 
 # Install dependencies
 uv sync
@@ -75,10 +75,10 @@ cp .env.example .env
 # Edit .env — set BOT_TOKEN and ADMIN_IDS
 
 # Run migrations
-alembic upgrade head
+uv run alembic upgrade head
 
 # Start
-python main.py
+uv run python main.py
 ```
 
 ## Configuration
@@ -98,10 +98,10 @@ All settings are in `.env`:
 
 ```bash
 # After changing models.py — generate migration
-alembic revision --autogenerate -m "description"
+uv run alembic revision --autogenerate -m "description"
 
 # Apply migrations
-alembic upgrade head
+uv run alembic upgrade head
 ```
 
 ## Adding a New Locale

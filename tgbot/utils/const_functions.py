@@ -1,17 +1,20 @@
+from datetime import datetime
 from textwrap import dedent
-from typing import Union
+from zoneinfo import ZoneInfo
 
 from aiogram import Bot
+from aiogram.exceptions import TelegramAPIError
 from aiogram.types import (
     InlineKeyboardButton,
-    KeyboardButton,
-    WebAppInfo,
-    Message,
     InlineKeyboardMarkup,
+    KeyboardButton,
+    Message,
     ReplyKeyboardMarkup,
+    WebAppInfo,
 )
 
-from tgbot.data.config import get_admins
+from tgbot.data.config import BOT_TIMEZONE, get_admins
+from tgbot.utils.misc.bot_logging import bot_logger
 
 
 #################################### AIOGRAM ###################################
@@ -21,10 +24,10 @@ def rkb(text: str) -> KeyboardButton:
 
 def ikb(
     text: str,
-    data: str = None,
-    url: str = None,
-    switch: str = None,
-    web: str = None,
+    data: str | None = None,
+    url: str | None = None,
+    switch: str | None = None,
+    web: str | None = None,
 ) -> InlineKeyboardButton:
     if data is not None:
         return InlineKeyboardButton(text=text, callback_data=data)
@@ -40,16 +43,16 @@ def ikb(
 async def del_message(message: Message):
     try:
         await message.delete()
-    except Exception:
-        pass
+    except TelegramAPIError as error:
+        bot_logger.debug("Failed to delete message: %s", error)
 
 
 async def smart_message(
     bot: Bot,
     user_id: int,
     text: str,
-    keyboard: Union[InlineKeyboardMarkup, ReplyKeyboardMarkup] = None,
-    photo: Union[str, None] = None,
+    keyboard: InlineKeyboardMarkup | ReplyKeyboardMarkup | None = None,
+    photo: str | None = None,
 ):
     if photo is not None and photo.title() != "None":
         await bot.send_photo(
@@ -76,31 +79,27 @@ async def send_admins(bot: Bot, text: str, markup=None, not_me=0):
                     reply_markup=markup,
                     disable_web_page_preview=True,
                 )
-            except Exception:
-                pass
+            except TelegramAPIError as error:
+                bot_logger.warning(
+                    "Failed to send message to admin %s: %s", admin, error
+                )
 
 
 ##################################### MISC #####################################
-def ded(get_text: str) -> str:
+def ded(get_text: str | None) -> str:
     if get_text is None:
         return ""
     return dedent(get_text).strip()
 
 
-def clear_html(get_text: str) -> str:
+def clear_html(get_text: str | None) -> str:
     if get_text is None:
         return ""
     return get_text.replace("<", "&lt;").replace(">", "&gt;")
 
 
 def get_date(full: bool = True) -> str:
-    from datetime import datetime
-
-    import pytz
-
-    from tgbot.data.config import BOT_TIMEZONE
-
-    now = datetime.now(pytz.timezone(BOT_TIMEZONE))
+    now = datetime.now(ZoneInfo(BOT_TIMEZONE))
     if full:
         return now.strftime("%d.%m.%Y %H:%M:%S")
     return now.strftime("%d.%m.%Y")
